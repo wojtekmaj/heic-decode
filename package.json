@@ -3,12 +3,13 @@
   "version": "2.1.0",
   "description": "Decode HEIC images to raw data",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "clean": "node -e \"fs.rmSync('./dist', { recursive: true, force: true })\"",
     "prepack": "npm run clean && npm run build",
-    "pretest": "node scripts/images.js",
-    "test": "mocha \"test/**/*.js\" --timeout 20000 --slow 0"
+    "pretest": "npm run build && node ./scripts/images.ts",
+    "test": "node --test \"test/**/*.ts\""
   },
   "repository": {
     "type": "git",
@@ -31,14 +32,11 @@
     "libheif-js": "^1.19.8"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^8.0.0",
+    "@types/node": "^22.0.0",
     "buffer-to-uint8array": "^1.1.0",
-    "chai": "^4.2.0",
     "eslint": "^5.16.0",
     "fs-extra": "^8.1.0",
-    "jimp": "^0.9.3",
-    "mocha": "^7.0.0",
+    "jimp": "^1.6.0",
     "node-fetch": "^2.6.0",
     "pixelmatch": "^5.2.1",
     "pngjs": "^5.0.0",

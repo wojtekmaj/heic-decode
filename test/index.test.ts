@@ -1,49 +1,67 @@
 /* eslint-env mocha */
-const { promisify } = require('util');
-const fs = require('fs');
-const path = require('path');
 
-const root = require('rootrequire');
-const { expect } = require('chai');
-const { PNG } = require('pngjs');
-const toUint8 = require('buffer-to-uint8array');
-const pixelmatch = require('pixelmatch');
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import { promisify } from 'node:util';
+import toUint8 from 'buffer-to-uint8array';
+import libheif from 'libheif-js';
+import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
+import root from 'rootrequire';
+import decode from '../src/index.ts';
+import lib from '../src/lib.ts';
 
 const readFile = promisify(fs.readFile);
 
 describe('heic-decode (default wasm bundle)', () => {
-  runTests(require(root));
+  runTests(decode);
 });
 
 describe('heic-decode (js)', () => {
-  const libheif = require('libheif-js');
-  const { one, all } = require('../lib')(libheif);
+  const { one, all } = lib(libheif);
   const decode = one;
-  decode.all = all;
+  (decode as any).all = all;
 
   runTests(decode);
 });
 
-function runTests(decode) {
-  const readControl = async name => {
+function runTests(decode: any) {
+  const readControl = async (
+    name: string
+  ): Promise<{ data: ArrayBuffer; width: number; height: number }> => {
     const buffer = await readFile(path.resolve(root, `temp/${name}`));
     const { data, width, height } = PNG.sync.read(buffer);
 
     return { data, width, height };
   };
 
-  const compare = (expected, actual, width, height, errString = 'actual image did not match control image') => {
-    const result = pixelmatch(toUint8(Buffer.from(expected)), toUint8(Buffer.from(actual)), null, width, height, {
-      threshold: 0.1
-    });
+  const compare = (
+    expected: ArrayBuffer,
+    actual: ArrayBuffer | Uint8ClampedArray,
+    width: number,
+    height: number,
+    errString = 'actual image did not match control image'
+  ) => {
+    const result = pixelmatch(
+      toUint8(Buffer.from(expected)),
+      toUint8(actual),
+      null,
+      width,
+      height,
+      {
+        threshold: 0.1,
+      }
+    );
 
     // allow 5% of pixels to be different
-    expect(result).to.be.below(width * height * 0.05, errString);
+    assert(result < width * height * 0.05, errString);
   };
 
   it('exports a function', () => {
-    expect(decode).to.be.a('function');
-    expect(decode).to.have.property('all').and.to.be.a('function');
+    assert.equal(typeof decode, 'function');
+    assert.equal(typeof decode.all, 'function');
   });
 
   it('can decode a known image', async () => {
@@ -51,9 +69,9 @@ function runTests(decode) {
     const buffer = await readFile(path.resolve(root, 'temp', '0002.heic'));
     const { width, height, data } = await decode({ buffer });
 
-    expect(width).to.equal(control.width);
-    expect(height).to.equal(control.height);
-    expect(data).to.be.instanceof(Uint8ClampedArray);
+    assert.equal(width, control.width);
+    assert.equal(height, control.height);
+    assert(data instanceof Uint8ClampedArray);
 
     compare(control.data, data, control.width, control.height);
   });
@@ -62,12 +80,12 @@ function runTests(decode) {
     const buffer = await readFile(path.resolve(root, 'temp', '0003.heic'));
     const images = await decode.all({ buffer });
 
-    expect(images).to.have.lengthOf(3);
-    expect(images).to.have.property('dispose').and.to.be.a('function');
+    assert.equal(images.length, 3);
+    assert.equal(typeof images.dispose, 'function');
 
     const controls = await Promise.all([
       readControl('0003-0-control.png'),
-      readControl('0003-1-control.png')
+      readControl('0003-1-control.png'),
     ]);
 
     for (let { i, control } of [
@@ -75,17 +93,23 @@ function runTests(decode) {
       { i: 1, control: controls[1] },
       { i: 2, control: controls[1] },
     ]) {
-      expect(images[i]).to.have.property('decode').and.to.be.a('function');
-      expect(images[i]).to.have.property('width').and.to.equal(control.width);
-      expect(images[i]).to.have.property('height').and.to.equal(control.height);
+      assert.equal(typeof images[i].decode, 'function');
+      assert.equal(images[i].width, control.width);
+      assert.equal(images[i].height, control.height);
 
       const image = await images[i].decode();
 
-      expect(image).to.have.property('width', control.width);
-      expect(image).to.have.property('height', control.height);
-      expect(image).to.have.property('data').and.to.be.instanceOf(Uint8ClampedArray);
+      assert.equal(image.width, control.width);
+      assert.equal(image.height, control.height);
+      assert.equal(image.data instanceof Uint8ClampedArray, true);
 
-      compare(control.data, image.data, control.width, control.height, `actual image at index ${i} did not match control`);
+      compare(
+        control.data,
+        image.data,
+        control.width,
+        control.height,
+        `actual image at index ${i} did not match control`
+      );
     }
 
     images.dispose();
@@ -98,8 +122,8 @@ function runTests(decode) {
       await decode({ buffer });
       throw new Error('decoding succeeded when it was expected to fail');
     } catch (e) {
-      expect(e).to.be.instanceof(TypeError)
-        .and.to.have.property('message', 'input buffer is not a HEIC image');
+      assert.equal(e instanceof TypeError, true);
+      assert.equal((e as TypeError).message, 'input buffer is not a HEIC image');
     }
   });
 }

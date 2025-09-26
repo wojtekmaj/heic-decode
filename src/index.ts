@@ -1,6 +1,10 @@
-const libheif = require('libheif-js/wasm-bundle');
+import libheif from 'libheif-js/wasm-bundle.js';
 
-const { one, all } = require('./lib.js')(libheif);
+import lib from './lib.ts';
 
-module.exports = one;
-module.exports.all = all;
+const { one, all } = lib(libheif);
+
+const decode: typeof one & { all: typeof all } = one as any;
+decode.all = all;
+
+export default decode;

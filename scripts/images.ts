@@ -1,11 +1,12 @@
 /* eslint-disable no-console */
-const path = require('path');
-const root = require('rootrequire');
-const fs = require('fs-extra');
-const fetch = require('node-fetch');
+
+import fs from 'fs-extra';
+import fetch from 'node-fetch';
+import path from 'path';
+import root from 'rootrequire';
 
 const resolve = (name = '') => path.resolve(root, 'temp', name);
-const drive = id => `http://drive.google.com/uc?export=view&id=${id}`;
+const drive = (id: string) => `http://drive.google.com/uc?export=view&id=${id}`;
 
 const images = [{
   name: '0001.jpg',
@@ -26,8 +27,12 @@ const images = [{
   name: '0003-1-control.png', // multiple images control, index 1, 2
   url: drive('1qD4-V6FcU2ffpNm0ZxKO2cpqbol73tok')
 }].map(img => {
-  img.path = resolve(img.name);
-  return img;
+  const path = resolve(img.name);
+
+  return {
+    ...img,
+    path,
+  }
 });
 
 (async () => {
