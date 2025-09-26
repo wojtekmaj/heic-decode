@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "module": "nodenext",
+    "moduleDetection": "force",
+    "moduleResolution": "nodenext",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "rewriteRelativeImportExtensions": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es2018",
+    "verbatimModuleSyntax": true
+  },
+  "exclude": ["dist"]
+}

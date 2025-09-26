@@ -32,8 +32,12 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# Node stuff
+# Node stuff and build outputs
 node_modules/
 coverage/
+dist/
 .nyc_output/
 temp/
+
+# npm pack
+*.tgz
